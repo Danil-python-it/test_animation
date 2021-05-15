@@ -1,7 +1,9 @@
 from pygame import *
+from random import randint
+
 
 Width = 1000
-Heigth = 800
+Heigth = 600
 FPS = 60
 WHITE = (255,255,255)
 RED = (255,0,0)
@@ -11,8 +13,11 @@ background = transform.scale(image.load("png/background.png"),(Width,Heigth))
 clock = time.Clock()
 display.set_caption("test_animation")
 stutus_fight = False
+stutus_xp = False
+init()
 timer = 45
 stutus = True
+text = 1
 
 Rogue = {
     "body":image.load("png/attack_rogue/rogueAttack1.png"),
@@ -38,6 +43,7 @@ Knight = {
 class GameSprite(sprite.Sprite):
     def __init__(self, x_coor, y_coor, time, animation_array, width, length, health, attack):
         super().__init__() 
+        self.Font = font.SysFont('arial', 15)
         self.x = x_coor
         self.y = y_coor
         self.animation_body = animation_array
@@ -68,7 +74,7 @@ class GameSprite(sprite.Sprite):
                     if self.x > Width//2:
                         self.body = transform.flip(self.body,True,False)
                     self.num_body += 1
-                    self.timer = 3
+                    self.timer = 2
                     self.image = transform.scale(self.body,(self.w,self.l))
                 
                 elif self.num_body == len(self.animation_body[self.name]):
@@ -81,7 +87,7 @@ class GameSprite(sprite.Sprite):
 
         if self.xp < 0:
             self.xp *= 0
-
+        self.text = self.Font.render(str(self.xp)+"%", False, (0,0,0))
         rect_black = Rect(self.rect.x,self.rect.bottom-5,self.rect.width,25)
         rect_white = Rect(self.rect.x+2,self.rect.bottom-7,self.rect.width,21)
         rect_red = Rect(self.rect.x+4,self.rect.bottom-9,self.xp*2,17)
@@ -89,9 +95,35 @@ class GameSprite(sprite.Sprite):
         draw.rect(window,BLACK,rect_black)
         draw.rect(window,WHITE,rect_white)
         draw.rect(window,RED,rect_red)
+        window.blit(self.text,(self.rect.x+90,self.rect.bottom-9))
 
-player = GameSprite(332,432,10,Knight,200,200,100,10)
-angry = GameSprite(682,432,10,Rogue,200,200,100,10)
+
+
+class public():
+    def __init__(self,x_coor,y_coor,color,width,height):
+        self.rect = Rect(x_coor,y_coor,width,height)
+        self.color = color
+        self.color_window = (204, 102, 0)
+        self.Font = font.SysFont('arial', 36)
+    
+    def draw(self):
+        self.rect_one = Rect(self.rect.x+20,self.rect.y+25,50,50)
+        self.rect_two = Rect(self.rect.x+90,self.rect.y+25,50,50)
+        self.rect_three = Rect(self.rect.x+160,self.rect.y+25,50,50)
+
+        draw.rect(window,self.color_window,self.rect)
+        draw.rect(window,(0,255,0),self.rect_one)
+        draw.rect(window,(0,0,255),self.rect_two)
+        if player.xp < 50 and stutus_xp == False:
+            draw.rect(window,(255,0,0),self.rect_three)
+
+
+player = GameSprite(332,200,10,Knight,200,200,100,10)
+angry = GameSprite(682,200,10,Rogue,200,200,100,10)
+windwo = public(0,500,BLACK,Width,100)
+
+
+
 
 game = True
 while game:
@@ -99,11 +131,13 @@ while game:
         if i.type == QUIT:
             game = False
         
+
         if i.type == MOUSEBUTTONDOWN:
             x,y = i.pos
-            res = angry.rect.collidepoint(x,y)
-            
-            if res != 0 and stutus_fight == True and timer == 0:
+            res = windwo.rect_one.collidepoint(x,y)
+            ras = windwo.rect_two.collidepoint(x,y)
+            rus = windwo.rect_three.collidepoint(x,y)
+            if res == 1 and stutus_fight == True and timer == 0:
                 player.name = "attack"
                 angry.name = "hurt"
                 player.stutus_animation = True
@@ -111,15 +145,33 @@ while game:
                 angry.xp -= player.attack
                 stutus_fight = False
                 timer = 35
+            elif ras == 1 and stutus_fight == True and timer == 0:
+                
+                player.name = "attack"
+                angry.name = "hurt"
+                player.stutus_animation = True
+                angry.stutus_animation = True
+                angry.xp -= randint(0,30)
+                stutus_fight = False
+                timer = 35
+            elif rus == 1 and stutus_fight == True and timer == 0 and player.xp < 50 and stutus_xp == False: 
+                player.xp += 25
+                stutus_fight = False
+                stutus_xp  = True
+                timer = 35
+
 
     going = key.get_pressed()
     window.blit(background,(0,0))
     
     player.update()
     angry.update()
-    
+    windwo.draw()
+
+
     if timer > 0 and stutus == True:
         timer -= 1
+
 
     if stutus_fight == False and angry.stutus_animation == False and timer == 0:
         angry.name = "attack"
@@ -134,6 +186,8 @@ while game:
         player.stutus_animation = True
         player.name = "death"
         stutus = False
+
+
     if angry.xp == 0 and angry.stutus_life != False :
         angry.stutus_animation = True
         angry.name = "death"
