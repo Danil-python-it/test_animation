@@ -1,7 +1,5 @@
 from pygame import *
 from random import randint
-
-
 Width = 1200
 Heigth = 800
 FPS = 60
@@ -21,7 +19,7 @@ text = 1
 all_sprite = sprite.Group()
 all_player = list()
 all_angry = list()
-
+one_click = 0
 Rogue = {
     "body":image.load("png/attack_rogue/rogueAttack1.png"),
     
@@ -31,8 +29,6 @@ Rogue = {
     
     "hurt":[image.load("png/hurt_rogue/hurt1.png"),image.load("png/hurt_rogue/hurt2.png"),image.load("png/hurt_rogue/hurt3.png"),image.load("png/hurt_rogue/hurt4.png"),image.load("png/attack_rogue/rogueAttack1.png")]
 }
-
-
 Knight = {
     "body":image.load("png/attack_knight/attack0.png"),
     
@@ -42,12 +38,21 @@ Knight = {
     
     "hurt":[image.load("png/hurt_knight/hurt1.png"),image.load("png/hurt_knight/hurt2.png"),image.load("png/hurt_knight/hurt3.png"),image.load("png/hurt_knight/hurt4.png"),image.load("png/attack_knight/attack0.png")]
 }
-
+Mage = {
+    "body":image.load("png/attack_mage/magattack1.png"),
+    
+    "attack":[image.load("png/attack_mage/magattack1.png"),image.load("png/attack_mage/magattack2.png"),image.load("png/attack_mage/magattack3.png"),image.load("png/attack_mage/magattack4.png"),image.load("png/attack_mage/magattack5.png"),image.load("png/attack_mage/magattack6.png"),image.load("png/attack_mage/magattack7.png"),image.load("png/attack_mage/magattack1.png")],
+    
+    "death":[image.load("png/death_mage/death1.png"),image.load("png/death_mage/death2.png"),image.load("png/death_mage/death3.png"),image.load("png/death_mage/death4.png"),image.load("png/death_mage/death5.png"),image.load("png/death_mage/death6.png"),image.load("png/death_mage/death7.png"),image.load("png/death_mage/death8.png"),image.load("png/death_mage/death9.png"),image.load("png/death_mage/death10.png"),],
+    
+    "hurt":[image.load("png/hurt_mage/hurt1.png"),image.load("png/hurt_mage/hurt2.png"),image.load("png/hurt_mage/hurt3.png"),image.load("png/hurt_mage/hurt4.png"),image.load("png/attack_mage/magattack1.png")]
+}
 class GameSprite(sprite.Sprite):
-    def __init__(self, x_coor, y_coor, time, animation_array, width, length, health, attack, list_attack=None):
+    def __init__(self, x_coor, y_coor, time, animation_array, width, length, health, attack,stutus="swoard", list_attack=None):
         super().__init__() 
         self.Font = font.SysFont('arial', 15)
         self.x = x_coor
+        self.stutus = stutus
         self.y = y_coor
         self.animation_body = animation_array
         self.timer = self.num_body = 0
@@ -71,7 +76,6 @@ class GameSprite(sprite.Sprite):
     #region update
     def update(self):
         window.blit(self.image,(self.rect.x,self.rect.y))
-
         if self.stutus_animation != False:
             if self.timer > 0:
                 self.timer -= 1
@@ -90,9 +94,10 @@ class GameSprite(sprite.Sprite):
                     if self.name == "death":
                         self.stutus_life = False
                     self.stutus_animation = False
-
         if self.xp < 0:
             self.xp *= 0
+        elif self.xp > 100:
+            self.xp = 100
         self.text = self.Font.render(str(self.xp)+"%", False, (0,0,0))
         rect_red = Rect(self.rect.left,self.rect.bottom,self.rect.width/100*self.xp,5)
         rect_white = Rect(self.rect.left,self.rect.bottom,self.rect.width,5)
@@ -104,75 +109,96 @@ class GameSprite(sprite.Sprite):
             draw.rect(window,(0,0,0),self.leader_rect)
             draw.rect(window,(255,255,255),self.rect_attack1)
             draw.rect(window,(255,255,255),self.rect_attack2)
-
-player = GameSprite(Width//2-200,200,10,Knight,200,200,100,10)
-angry = GameSprite(player.rect.x+500,200,10,Rogue,200,200,100,10)
-player2 = GameSprite(Width//2-200,400,10,Knight,200,200,100,10)
-angry2 = GameSprite(player.rect.x+500,400,10,Rogue,200,200,100,10)
-
-all_sprite.add(player)
-all_sprite.add(angry)
-all_sprite.add(player2)
-all_sprite.add(angry2)
-
-all_player.append(player)
-all_angry.append(angry)
-all_player.append(player2)
-all_angry.append(angry2)
-
+for i in range(4):
+    if i == 1:
+        player = GameSprite(Width//2-500,Heigth//2-400,10,Mage,200,200,100,25,"mage")
+        all_sprite.add(player)
+        all_player.append(player)
+    elif i == 2:
+        player = GameSprite(Width//2-300,Heigth//2-200,10,Knight,200,200,100,10)
+        all_sprite.add(player)
+        all_player.append(player)
+    elif i == 3:
+        player = GameSprite(Width//2-500,Heigth//2,10,Rogue,200,200,100,10)
+        all_sprite.add(player)
+        all_player.append(player)
+for i in range(3):
+    if i == 2:
+        angry = GameSprite(Width//2+300,Heigth//2-400,10,Rogue,200,200,100,10)
+        all_sprite.add(angry)
+        all_angry.append(angry)
+    elif i == 1:
+        angry = GameSprite(Width//2+300,Heigth//2,10,Knight,200,200,100,10)
+        all_sprite.add(angry)
+        all_angry.append(angry)
+#region game_while
 game = True
 while game:
+    going = key.get_pressed()
     for i in event.get():
         if i.type == QUIT:
             game = False
-        
-
         if i.type == MOUSEBUTTONDOWN:
             x,y = i.pos
-            
-
             for i in all_player:
-                if i.rect.collidepoint(x,y) == 1 and stutus_fight == True and angry.stutus_animation == False :
+                if i.rect.collidepoint(x,y) == 1 and stutus_fight == True and angry.stutus_animation == False and one_click == 0:
                     i.stutus_public = True
-                
+                    one_click = 1
                 if stutus_fight == True and angry.stutus_animation == False:
-                    print(6)
-                    if i.stutus_public == True and timer == 0 and i.rect_attack1.collidepoint(x,y) == 1 :
-                        angry3 = all_angry[randint(0,len(all_angry)-1)]
-                        angry3.name = "hurt"
-                        i.name = "attack"
-                        angry3.stutus_animation = True
-                        i.stutus_animation = True
-                        angry3.xp -= i.attack
-                        stutus_fight = False
-                        i.stutus_public = False
-                        timer = 35
-                    elif i.stutus_public == True and timer == 0 and i.rect_attack2.collidepoint(x,y) == 1:
-                        angry3 = all_angry[randint(0,len(all_angry)-1)]
-                        angry3.name = "hurt"
-                        i.name = "attack"
-                        angry3.stutus_animation = True
-                        i.stutus_animation = True
-                        angry3.xp -= randint(0,i.attack*3)
-                        stutus_fight = False
-                        i.stutus_public = False
-                        timer = 35
-
-    going = key.get_pressed()
+                    if i.stutus == "swoard":
+                        if i.stutus_public == True and timer == 0 and i.rect_attack1.collidepoint(x,y) == 1 :
+                            angry3 = all_angry[randint(0,len(all_angry)-1)]
+                            angry3.name = "hurt"
+                            i.name = "attack"
+                            angry3.stutus_animation = True
+                            i.stutus_animation = True
+                            angry3.xp -= i.attack
+                            stutus_fight = False
+                            i.stutus_public = False
+                            timer = 35
+                            one_click = 0
+                        elif i.stutus_public == True and timer == 0 and i.rect_attack2.collidepoint(x,y) == 1:
+                            angry3 = all_angry[randint(0,len(all_angry)-1)]
+                            angry3.name = "hurt"
+                            i.name = "attack"
+                            angry3.stutus_animation = True
+                            i.stutus_animation = True
+                            angry3.xp -= randint(0,i.attack*3)
+                            stutus_fight = False
+                            i.stutus_public = False
+                            timer = 35
+                            one_click = 0
+                    elif i.stutus == "mage":
+                        if i.stutus_public == True and timer == 0 and i.rect_attack1.collidepoint(x,y) == 1:
+                            print(1)
+                            i.name = "attack"
+                            i.stutus_animation = True
+                            for a in all_player:
+                                a.xp += i.attack
+                            stutus_fight = False
+                            i.stutus_public = False
+                            timer = 35
+                            one_click = 0
+                        elif i.stutus_public == True and timer == 0 and i.rect_attack2.collidepoint(x,y) == 1:
+                            i.name = "attack"
+                            i.stutus_animation = True
+                            for s in all_angry:
+                                s.name = "hurt"
+                                s.stutus_animation = True
+                                s.xp -= int(i.attack/5)
+                            stutus_fight = False
+                            i.stutus_public = False
+                            timer = 35
+                            one_click = 0                                                    
     if going[K_7]:
         for i in all_player:
             i.xp = 100
     window.blit(background,(0,0))
-    
     for i in all_sprite:
         i.update()
-
-
     if timer > 0 :
         timer -= 1
-
     if stutus_fight == False and timer == 0 and len(all_angry)>0:
-        print(1)
         angry3 = all_angry[randint(0,len(all_angry)-1)]
         player3 = all_player[randint(0,len(all_player)-1)]
         if angry3.stutus_animation == False :
@@ -183,15 +209,12 @@ while game:
             player3.xp -= angry3.attack
             stutus_fight = True
             timer = 35
-        
     for i in all_sprite:
         if i.xp == 0 and i.stutus_life == False:
             i.kill()
-
         if i.xp == 0 and i.stutus_life == True :
             i.name = "death"
             i.stutus_animation = True
-
         if i.body == i.animation_body["death"][len(i.animation_body["death"])-1]:
             i.stutus_life = False
     if len(all_angry)>0:
@@ -202,6 +225,16 @@ while game:
         for i in all_player:
             if i.xp == 0 and i.stutus_life == False:
                 all_player.remove(i)
-    
+    if len(all_angry) == 0 :
+        for i in range(3):
+            if i == 2:
+                angry = GameSprite(Width//2+300,Heigth//2-400,10,Rogue,200,200,100,10)
+                all_sprite.add(angry)
+                all_angry.append(angry)
+            elif i == 1:
+                angry = GameSprite(Width//2+300,Heigth//2,10,Knight,200,200,100,10)
+                all_sprite.add(angry)
+                all_angry.append(angry)
     display.update()
     clock.tick(FPS)
+#endregion
